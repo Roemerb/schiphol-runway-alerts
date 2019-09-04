@@ -2,7 +2,9 @@ package main
 
 import (
 	"log"
+	sysHttp "net/http"
 
+	"github.com/roemerb/schiphol-runway-alerts/http"
 	"github.com/roemerb/schiphol-runway-alerts/lvnl"
 )
 
@@ -24,5 +26,6 @@ func main() {
 			lvnl.PrintState()
 		}
 	}()
-	<-stop
+
+	sysHttp.ListenAndServe(":3000", http.NewRouter())
 }
