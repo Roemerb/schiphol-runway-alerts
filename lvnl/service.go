@@ -1,8 +1,11 @@
 package lvnl
 
 import (
+	"fmt"
 	"log"
 	"time"
+
+	"gopkg.in/gookit/color.v1"
 )
 
 // Service describes the service that will listen for runway usage changes
@@ -36,30 +39,66 @@ func (rw Runway) IsActive() bool {
 func Start(changes chan *Runway, stop chan bool) {
 	log.Println("Starting LVNL service")
 	initiateState()
-	t := time.NewTicker(5 * time.Minute)
+	t := time.NewTicker(5 * time.Second)
 
 	go func() {
-		select {
-		case <-stop:
-			log.Println("LVNL Service received stop signal. Killing service")
-			return
-		case <-t.C:
-			log.Println("Fetching runway usage")
-			runwayUsageRequest := RunwayUsageRequest{
-				Year:   time.Now().Year(),
-				Month:  int(time.Now().Month()),
-				Day:    time.Now().Day(),
-				Hour:   time.Now().Hour(),
-				Minute: time.Now().Minute(),
-			}
+		for {
+			select {
+			case <-stop:
+				log.Println("LVNL Service received stop signal. Killing service")
+				return
+			case <-t.C:
+				log.Println("Fetching runway usage")
+				runwayUsageRequest := RunwayUsageRequest{
+					Year:   time.Now().Year(),
+					Month:  int(time.Now().Month()),
+					Day:    time.Now().Day(),
+					Hour:   time.Now().Hour(),
+					Minute: time.Now().Minute(),
+				}
 
-			response := GetRunwayUsage(&runwayUsageRequest)
-			updateState(&response, changes)
+				response := GetRunwayUsage(&runwayUsageRequest)
+				updateState(&response, changes)
+			}
 		}
 	}()
 }
 
+// PrintState will pretty-print the current state to the console
+func PrintState() {
+	longestLength := 0
+	for _, rw := range State {
+		full := rw.Name + " (" + rw.Code + ")"
+		if len(full) > longestLength {
+			longestLength = len(full)
+		}
+	}
+
+	for _, rw := range State {
+		full := rw.Name + " (" + rw.Code + ")"
+		fmt.Print(full)
+		if len(full) < longestLength {
+			for i := 0; i < longestLength-len(full); i++ {
+				fmt.Print(" ")
+			}
+		}
+		fmt.Print("\t\t\t")
+
+		if rw.Active {
+			color.Green.Print("ACTIVE\t\t")
+			if rw.Direction {
+				color.Yellow.Print("Landing\n")
+			} else {
+				color.Yellow.Print("Takeoff\n")
+			}
+		} else {
+			color.Red.Print("INACTIVE\n")
+		}
+	}
+}
+
 func initiateState() {
+	State = make(map[string]Runway)
 	for code, name := range Runways {
 		rw := Runway{
 			Code:      code,
@@ -69,6 +108,7 @@ func initiateState() {
 		}
 		State[code] = rw
 	}
+	log.Println("State initiated!")
 }
 
 func updateState(res *RunwayUsageResponse, changes chan *Runway) {

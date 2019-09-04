@@ -2,7 +2,8 @@ package main
 
 import (
 	"log"
-	"lvnl"
+
+	"github.com/roemerb/schiphol-runway-alerts/lvnl"
 )
 
 // VERSION is the version of the app
@@ -13,4 +14,15 @@ func main() {
 
 	changes := make(chan *lvnl.Runway)
 	stop := make(chan bool)
+
+	lvnl.Start(changes, stop)
+
+	go func() {
+		for {
+			change := <-changes
+			log.Println(change.Name + " has changed!")
+			lvnl.PrintState()
+		}
+	}()
+	<-stop
 }

@@ -2,7 +2,6 @@ package lvnl
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -24,6 +23,9 @@ var Runways = map[string]string{
 	"18C": "Zwanenburgbaan",
 	"36C": "Zwanenburgbaan",
 }
+
+// ENDPOINT is the URL to call to get lvnl information
+var ENDPOINT = "https://www.lvnl.nl/umbraco/api/RunwayPlan/Get"
 
 // RunwayUsageRequest contains the parameters needed to perform
 // a request to the LVNL service to retrieve runway usage information
@@ -72,7 +74,7 @@ func (res RunwayUsageResponse) GetActiveLandingRunways() []string {
 func (res RunwayUsageResponse) GetActiveTakeoffRunways() []string {
 	var active []string
 	if res.Takeoff1 != "" {
-		active = append(active, res.Landing1)
+		active = append(active, res.Takeoff1)
 	}
 
 	if res.Takeoff2 != "" {
@@ -97,9 +99,8 @@ func GetRunwayUsage(req *RunwayUsageRequest) RunwayUsageResponse {
 		strconv.Itoa(req.Minute),
 	}
 	payload := "[" + strings.Join(payloadArr, ",") + "]"
-	fmt.Println("Payload: " + payload)
 
-	resp, err := http.Post("https://www.lvnl.nl/umbraco/api/RunwayPlan/Get", "application/json", strings.NewReader(payload))
+	resp, err := http.Post(ENDPOINT, "application/json", strings.NewReader(payload))
 	if err != nil {
 		log.Fatal("FAILED: " + err.Error())
 	}
