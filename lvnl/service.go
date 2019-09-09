@@ -33,6 +33,24 @@ func (rw Runway) IsActive() bool {
 	return false
 }
 
+// ToMessage generates a Telegram-friendly notification message
+// from  runway information
+func (rw Runway) ToMessage() string {
+	msg := "De " + rw.Name + " (" + rw.Code + ") is nu "
+	if rw.IsActive() {
+		msg = msg + "open als "
+		if rw.Direction {
+			msg = msg + "landingsbaan."
+		} else {
+			msg = msg + "vertrekbaan."
+		}
+	} else {
+		msg = msg + "gesloten."
+	}
+
+	return msg
+}
+
 // Start starts the LVNL service that will watch runway activity from
 // the API. When a change is detected, the updated Runway will be pushed
 // onto the channel that this function returns

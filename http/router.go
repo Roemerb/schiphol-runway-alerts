@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// Route holds all the info for a route
 type Route struct {
 	Name    string
 	Method  string
@@ -13,6 +14,7 @@ type Route struct {
 	Handler http.HandlerFunc
 }
 
+// Routes is just a Route array
 type Routes []Route
 
 var routes = Routes{
@@ -24,6 +26,7 @@ var routes = Routes{
 	},
 }
 
+// NewRouter generates a new mux.Router instance
 func NewRouter() *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 	for _, route := range routes {

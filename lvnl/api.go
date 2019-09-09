@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/roemerb/schiphol-runway-alerts/config"
 )
 
 // Runways is a definition table for the different runways at Schiphol Airport
@@ -23,9 +25,6 @@ var Runways = map[string]string{
 	"18C": "Zwanenburgbaan",
 	"36C": "Zwanenburgbaan",
 }
-
-// ENDPOINT is the URL to call to get lvnl information
-var ENDPOINT = "https://www.lvnl.nl/umbraco/api/RunwayPlan/Get"
 
 // RunwayUsageRequest contains the parameters needed to perform
 // a request to the LVNL service to retrieve runway usage information
@@ -54,6 +53,9 @@ type RunwayUsageResponse struct {
 	IsLast   bool      `json:"isLast"`
 }
 
+// GetActiveLandingRunways takes the response from the LVNL api and extracts
+// the currently active runways, as they're all in seperate fields. This makes
+// for some cleaner code while parsing
 func (res RunwayUsageResponse) GetActiveLandingRunways() []string {
 	var active []string
 	if res.Landing1 != "" {
@@ -71,6 +73,9 @@ func (res RunwayUsageResponse) GetActiveLandingRunways() []string {
 	return active
 }
 
+// GetActiveTakeoffRunways takes the response from the LVNL api and extracts
+// the currently active runways, as they're all in seperate fields. This makes
+// for some cleaner code while parsing
 func (res RunwayUsageResponse) GetActiveTakeoffRunways() []string {
 	var active []string
 	if res.Takeoff1 != "" {
@@ -100,7 +105,8 @@ func GetRunwayUsage(req *RunwayUsageRequest) RunwayUsageResponse {
 	}
 	payload := "[" + strings.Join(payloadArr, ",") + "]"
 
-	resp, err := http.Post(ENDPOINT, "application/json", strings.NewReader(payload))
+	config := config.Load()
+	resp, err := http.Post(config.LVNLEndpoint, "application/json", strings.NewReader(payload))
 	if err != nil {
 		log.Fatal("FAILED: " + err.Error())
 	}

@@ -1,6 +1,8 @@
 package telegram
 
 import (
+	"log"
+	"strconv"
 	"strings"
 )
 
@@ -39,6 +41,13 @@ func (c SubscribeCommand) Handle(update *Update) *SendMessage {
 	}
 	msg.Send()
 
+	var s SubscriberRepository
+	update.Message.From.ChatID = update.Message.Chat.ID
+	sub, err := s.GetOrCreateSubscriber(&update.Message.From)
+	if err != nil {
+		log.Println(err.Error())
+	}
+	log.Println(update.Message.From.Username + " is subscriber " + strconv.Itoa(sub.ID))
 	return &msg
 }
 
